@@ -1,0 +1,288 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "API Lookup Service v1",
+    "description": "The API Lookup Service is a platform service with following goals:\n- Redirect users to REST APIs related to a resource identified by an HRN\n- Given an HRN, provide parameters to be used in REST APIs calls.\n- Discovery of other platform APIs.",
+    "version": "1.0.3",
+    "x-document-meta-data": {
+      "copyright": "© 2019 HERE Europe B.V.",
+      "document-id": "a33baa06-af12-4bcc-b379-ff1b742f0b0b",
+      "date-created": "2019-06-04T11:32:31+00:00"
+    }
+  },
+  "host": "api-lookup.data.api.platform.here.com",
+  "basePath": "/lookup/v1",
+  "schemes": [
+    "https"
+  ],
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "Bearer": [
+
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Resources",
+      "description": "Lookup of APIs related to resources identified by an HRN"
+    },
+    {
+      "name": "Platform",
+      "description": "Lookup of platform-wide, general APIs"
+    }
+  ],
+  "paths": {
+    "/resources/{hrn}/apis": {
+      "get": {
+        "summary": "Return the list of APIs for a given resource",
+        "operationId": "resourceAPIList",
+        "tags": [
+          "Resources"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "hrn",
+            "in": "path",
+            "description": "The HRN identifying the resource",
+            "required": true,
+            "type": "string",
+            "format": "uri"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of APIs that can be used with the resource",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API"
+              }
+            }
+          },
+          "404": {
+            "description": "Error looking up the resource or its APIs",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/resources/{hrn}/apis/{api}/{version}": {
+      "get": {
+        "summary": "Return details of a single API for a given resource",
+        "operationId": "resourceAPI",
+        "tags": [
+          "Resources"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "hrn",
+            "in": "path",
+            "description": "The HRN identifying the resource",
+            "required": true,
+            "type": "string",
+            "format": "uri"
+          },
+          {
+            "name": "api",
+            "in": "path",
+            "description": "The identifier of the API",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-z0-9\\-_]+$"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "description": "The version of the API",
+            "required": true,
+            "type": "string",
+            "pattern": "^v[0-9]+$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Details of the requested API for the resource",
+            "schema": {
+              "$ref": "#/definitions/API"
+            }
+          },
+          "404": {
+            "description": "Error looking up the resource or its API",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/platform/apis": {
+      "get": {
+        "summary": "Return the list of the platform APIs",
+        "operationId": "platformAPIList",
+        "tags": [
+          "Platform"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of APIs of the platform",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/API"
+              }
+            }
+          },
+          "404": {
+            "description": "Error looking up the platform APIs",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/platform/apis/{api}/{version}": {
+      "get": {
+        "summary": "Return details of a single platform API",
+        "operationId": "platformAPI",
+        "tags": [
+          "Platform"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "api",
+            "in": "path",
+            "description": "The identifier of the API",
+            "required": true,
+            "type": "string",
+            "pattern": "^[a-z0-9\\-_]+$"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "description": "The version of the API",
+            "required": true,
+            "type": "string",
+            "pattern": "^v[0-9]+$"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Details of the requested API",
+            "schema": {
+              "$ref": "#/definitions/API"
+            }
+          },
+          "404": {
+            "description": "Error looking up the API",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "API": {
+      "required": [
+        "api",
+        "version",
+        "baseURL"
+      ],
+      "properties": {
+        "api": {
+          "type": "string",
+          "pattern": "^[a-z0-9\\-_]+$",
+          "description": "The name of the API.",
+          "example": "config"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+$",
+          "description": "The version of the API.",
+          "example": "v1"
+        },
+        "baseURL": {
+          "type": "string",
+          "format": "url",
+          "description": "The base URL to use when constructing HTTP calls to the API. Concatenate the base URL with the API path shown in the API specification. For example, for the 'config' API's catalog list endpoint, you would construct the URL as follows: 'https://config.data.api.platform.here.com/config/v1' + '/catalogs' where the first part of the URL is the base URL and the second part is the API path.",
+          "example": "https://config.data.api.platform.here.com/config/v1"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Error": {
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Repetition of the HTTP error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Short description of the error"
+        },
+        "description": {
+          "type": "string",
+          "description": "Complete description of the error"
+        }
+      }
+    }
+  }
+}

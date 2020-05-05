@@ -1,0 +1,734 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "The `metadata` service provides a way to get information (metadata) about layers and partitions stored in a catalog. This service exposes the metadata for all the partitions or all the changed partitions. For a catalog with versioned layers, you can retrieve metadata for a particular version or version range of the catalog. You can perform the following operations for a catalog with versioned layers:\n- List versions of the catalog\n- Get latest and minimum version of the catalog\n- Get metadata of the specific layers\n\nFor a volatile layer, you can get metadata for all or a subset of partitions of the layer.",
+    "version": "1.0.0",
+    "title": "Metadata API v1",
+    "contact": {
+    },
+    "x-olp-service": {
+      "name": "metadata",
+      "version": "v1"
+    },
+    "x-document-meta-data": {
+      "copyright": "© 2020 HERE Europe B.V.",
+      "document-id": "81f8861b-f894-468f-b5e1-28ede724a075",
+      "date-created": "2020-01-21T17:28:50+00:00"
+    }
+  },
+  "host": "use.apilookup.for.a.base.url",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "Bearer": [
+
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "metadata",
+      "description": "Get information about catalogs, layers, and partitions"
+    }
+  ],
+  "paths": {
+    "/layerVersions": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Gets layer versions for catalog version",
+        "description": "Returns information about layer versions for the catalog version. It will return an error if the catalog does not have any versions or if the version passed in the query parameter does not exist. If a layer does not have any data for the requested version it is excluded from the response.",
+        "operationId": "getLayersVersion",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "description": "Catalog version",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "billingTag",
+            "in": "query",
+            "description": "Billing Tag is an optional free-form tag which is used for grouping billing records together. If supplied, it must be between 4 - 16 characters, contain only alphanumeric ASCII characters [A-Za-z0-9]. Grouping billing records by billing tag will be available in future releases.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LayerVersions"
+            }
+          },
+          "400": {
+            "description": "Required parameters are missing"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Catalog does not exist"
+          }
+        },
+        "x-olp-access-type": "resource"
+      }
+    },
+    "/layers/{layerId}/changes": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Gets changes for the version range.",
+        "description": "Gets the latest partition metadata in a version range for a versioned layer or a time range for a volatile layer. For versioned layers the range is expressed as a start and end version and might not return all changes for the partitions which were added and removed in between the specified start and end versions.",
+        "operationId": "getChanges",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "description": "Unique layer ID. Content of this parameter must refer to a valid layer ID.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "startVersion",
+            "in": "query",
+            "description": "Available for versioned layers only; the beginning of the range of versions you want to get (exclusive). By convention -1 indicates the initial version before the first publication. After the first publication, the catalog version is 0.",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "endVersion",
+            "in": "query",
+            "description": "Available for versioned layers only; the end of the range of versions you want to get (inclusive). This must be a valid catalog version greater than the startVersion.",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "sinceTime",
+            "in": "query",
+            "description": "Available for volatile layers only; will return partitions whose data has been modified since this time, in milliseconds since epoch, inclusive.",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "additionalFields",
+            "in": "query",
+            "description": "Additional fields - `dataSize`, `checksum`, `compressedDataSize`",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "enum": [
+              "dataSize",
+              "checksum",
+              "compressedDataSize"
+            ],
+            "collectionFormat": "csv"
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "description": "Use this parameter to resume download of a large response for versioned layers when there is a connection issue between the client and server. Specify a single byte range offset like this: `Range: bytes=10-`. This parameter is compliant with [RFC 7233](https://tools.ietf.org/html/rfc7233), but note that this parameter only supports a single byte range. The `range` parameter can also be specified as a query parameter, i.e. `range=bytes=10-`. For volatile layers use the pagination links returned in the response body.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "billingTag",
+            "in": "query",
+            "description": "Billing Tag is an optional free-form tag which is used for grouping billing records together. If supplied, it must be between 4 - 16 characters, contain only alpha/numeric ASCII characters  [A-Za-z0-9]. Grouping billing records by billing tag will be available in future releases.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Partitions"
+            },
+            "headers": {
+              "Last-Modified": {
+                "type": "string",
+                "description": "The date and time at which the resource was last modified"
+              }
+            }
+          },
+          "206": {
+            "description": "Partial response in case the server provides and accepts range query parameter or Content-Range header",
+            "schema": {
+              "$ref": "#/definitions/Partitions"
+            },
+            "headers": {
+              "Last-Modified": {
+                "type": "string",
+                "description": "The date and time at which the resource was last modified"
+              }
+            }
+          },
+          "400": {
+            "description": "Required parameters are missing"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Catalog or layer does not exist"
+          },
+          "416": {
+            "description": "Range Not Satisfiable, invalid range query parameter or Content-Range header"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "headers": {
+              "Retry-After": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Retry after the specified number of seconds"
+              }
+            }
+          }
+        },
+        "x-olp-access-type": "resource"
+      }
+    },
+    "/layers/{layerId}/partitions": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Gets partitions",
+        "description": "Gets the metadata for all partitions in a specific layer.",
+        "operationId": "getPartitions",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "description": "Unique layer ID. Content of this parameter must refer to a valid layer ID.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "If you are getting metadata from a versioned layer, specify the version of the layer you want. This parameter is required for versioned layers. If you are getting metadata from another layer type, do not specify this parameter.",
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "additionalFields",
+            "in": "query",
+            "description": "Additional fields - `dataSize`, `checksum`, `compressedDataSize`",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "enum": [
+              "dataSize",
+              "checksum",
+              "compressedDataSize"
+            ],
+            "collectionFormat": "csv"
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "description": "Use this parameter to resume download of a large response for versioned layers when there is a connection issue between the client and server. Specify a single byte range offset like this: `Range: bytes=10-`. This parameter is compliant with [RFC 7233](https://tools.ietf.org/html/rfc7233), but note that this parameter only supports a single byte range. The `range` parameter can also be specified as a query parameter, i.e. `range=bytes=10-`. For volatile layers use the pagination links returned in the response body.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "billingTag",
+            "in": "query",
+            "description": "Billing Tag is an optional free-form tag which is used for grouping billing records together. If supplied, it must be between 4 - 16 characters, contain only alpha/numeric ASCII characters [A-Za-z0-9]. Grouping billing records by billing tag will be available in future releases.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Partitions"
+            },
+            "headers": {
+              "Last-Modified": {
+                "type": "string",
+                "description": "The date and time at which the resource was last modified"
+              }
+            }
+          },
+          "206": {
+            "description": "Partial response in case the server provides and accepts range query parameter or Content-Range header",
+            "schema": {
+              "$ref": "#/definitions/Partitions"
+            },
+            "headers": {
+              "Last-Modified": {
+                "type": "string",
+                "description": "The date and time at which the resource was last modified"
+              }
+            }
+          },
+          "400": {
+            "description": "Required parameters are missing"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Catalog or layer does not exist"
+          },
+          "416": {
+            "description": "Range Not Satisfiable, invalid range query parameter or Content-Range header"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "headers": {
+              "Retry-After": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Retry after the specified number of seconds"
+              }
+            }
+          }
+        },
+        "x-olp-access-type": "resource"
+      }
+    },
+    "/versions": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Gets catalog versions",
+        "description": "Returns information about specific catalog version(s). If the catalog doesn't contain any versions 404 will be returned. Maximum number of versions to be returned per call is 1000 versions. If requested range is bigger than 1000 versions 400 Bad Request will be returned",
+        "operationId": "listVersions",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "startVersion",
+            "in": "query",
+            "description": "The beginning of the range of versions you want to get (exclusive). By convention -1 indicates the initial version before the first publication. After the first publication, the catalog version is 0.",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "endVersion",
+            "in": "query",
+            "description": "The end of the range of versions you want to get (inclusive). This must be a valid catalog version greater than the startVersion. The maximum value for this parameter is returned from the `/versions/latest` endpoint. If this version does not exist, 400 Bad Request is returned",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "billingTag",
+            "in": "query",
+            "description": "Billing Tag is an optional free-form tag which is used for grouping billing records together. If supplied, it must be between 4 - 16 characters, contain only alpha/numeric ASCII characters  [A-Za-z0-9]. Grouping billing records by billing tag will be available in future releases.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/VersionInfos"
+            }
+          },
+          "400": {
+            "description": "Bad Request - indicates that request failed fast validation e.g. syntax, some logical errors or required parameters are missing"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Catalog does not exist or the catalog doesn't contain any versions"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "headers": {
+              "Retry-After": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Retry after the specified number of seconds"
+              }
+            }
+          }
+        },
+        "x-olp-access-type": "resource"
+      }
+    },
+    "/versions/latest": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Gets the latest available catalog version",
+        "description": "Returns information about the latest version for the given catalog. If the catalog doesn't contain any versions a 404 will be returned.",
+        "operationId": "latestVersion",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "startVersion",
+            "in": "query",
+            "description": "The catalog version returned from a prior request to `/versions/latest`. You should save the version from each request so that you can use it in the `startVersion` parameter of subsequent requests. If you don't have the version from a prior request, set the parameter to -1.",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "billingTag",
+            "in": "query",
+            "description": "Billing Tag is an optional free-form tag which is used for grouping billing records together. If supplied, it must be between 4 - 16 characters, contain only alpha/numeric ASCII characters  [A-Za-z0-9]. Grouping billing records by billing tag will be available in future releases.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/VersionResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - indicates that the request failed the validation, e.g. syntax check is failing, logical errors exist or required parameters are missing."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Catalog does not exist or the catalog doesn't contain any versions."
+          }
+        },
+        "x-olp-access-type": "resource"
+      }
+    },
+    "/versions/minimum": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Gets the earliest available catalog version",
+        "description": "Returns minimum version for the given catalog. If the catalog doesn't contain any versions 404 will be returned.",
+        "operationId": "minimumVersion",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "billingTag",
+            "in": "query",
+            "description": "Billing Tag is an optional free-form tag which is used for grouping billing records together. If supplied, it must be between 4 - 16 characters, contain only alpha/numeric ASCII characters  [A-Za-z0-9]. Grouping billing records by billing tag will be available in future releases.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/VersionResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - indicates that the request failed the validation, e.g. syntax check is failing, logical errors exist or required parameters are missing."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Catalog does not exist or the catalog doesn't contain any versions."
+          }
+        },
+        "x-olp-access-type": "resource"
+      }
+    }
+  },
+  "definitions": {
+    "LayerVersion": {
+      "type": "object",
+      "required": [
+        "layer",
+        "version",
+        "timestamp"
+      ],
+      "properties": {
+        "layer": {
+          "type": "string",
+          "example": "my-layer",
+          "description": "Layer ID"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "example": 0,
+          "description": "Version of the layer when it was last updated"
+        },
+        "timestamp": {
+          "type": "integer",
+          "example": "1516397474657",
+          "format": "int64",
+          "description": "Timestamp that indicates when the version of the layer was created. It is equal to 'timestamp' field corresponding to catalog version."
+        }
+      },
+      "description": "Describes catalog layer version."
+    },
+    "LayerVersions": {
+      "type": "object",
+      "required": [
+        "layerVersions",
+        "version"
+      ],
+      "properties": {
+        "layerVersions": {
+          "type": "array",
+          "description": "List of layer versions",
+          "items": {
+            "$ref": "#/definitions/LayerVersion"
+          }
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1,
+          "description": "Catalog version"
+        }
+      },
+      "description": "Describes the list of the layer versions for a given catalog version."
+    },
+    "Partition": {
+      "type": "object",
+      "required": [
+        "partition",
+        "version"
+      ],
+      "properties": {
+        "checksum": {
+          "type": "string",
+          "example": "291f66029c232400e3403cd6e9cfd36e",
+          "description": "The checksum field is optional. The response includes the checksum only if you specify `checksum` in the `additionalFields` query parameter, and if a checksum was specified in the partition metadata when it was published. You need to use the SHA-1 checksum of the data content if you want data comparison to work for this catalog. The maximum length of the checksum field is 128 characters."
+        },
+        "compressedDataSize": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1024,
+          "description": "Optional value for the size of the compressed partition data in bytes. The response only includes the compressed data size if you specify `compressedDataSize` in the `additionalFields` query parameter, and if compression is enabled, and if `compressedDataSize` was specified in the partition metadata when it was published."
+        },
+        "dataHandle": {
+          "type": "string",
+          "example": "1b2ca68f-d4a0-4379-8120-cd025640510c",
+          "description": "You use the data handle when retrieving the data that relates to this partition. The data handle identifies a specific blob so that you can request the blob's contents with the Blob API. When requesting data from the Blob API, you must specify the catalog ID, layer ID and the dataHandle."
+        },
+        "dataSize": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1024,
+          "description": "Optional value for the size of the partition data in bytes. The response only includes the data size if you specify `dataSize` in the `additionalFields` query parameter, and if `dataSize` was specified in the partition metadata when it was published."
+        },
+        "partition": {
+          "type": "string",
+          "example": "314010583",
+          "description": "The partition key. This is a unique key for a partition within a layer. If the layer's partitioning scheme is set to `heretile`, the partition key is equivalent to the tile key. The partition key cannot be empty. The maximum length of the partition key is 500 characters."
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1,
+          "description": "For active versioned partitions, the version of the catalog when this partition was last changed. For volatile partitions this will always be -1"
+        }
+      },
+      "description": "Describes the partition object which is unique within a layer."
+    },
+    "Partitions": {
+      "type": "object",
+      "required": [
+        "partitions"
+      ],
+      "properties": {
+        "partitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Partition"
+          }
+        },
+        "next": {
+          "type": "string",
+          "format": "uri",
+          "description": "If the number of results exceeds the limit, then this uri will be present and will provide the path to the next batch of results.",
+          "example": "/uri/to/next/page"
+        }
+      },
+      "description": "Describes a list of partitions for a given layer and layer version."
+    },
+    "VersionDependency": {
+      "type": "object",
+      "required": [
+        "direct",
+        "hrn",
+        "version"
+      ],
+      "properties": {
+        "direct": {
+          "type": "boolean",
+          "example": false,
+          "description": "Indicates the type of data dependency. If this value is set to false, this dependency is an indirect dependency. This means that data from this catalog was not directly used by a data processing pipeline to update the current version of the catalog. Instead, the data was only used by upstream pipeline(s) to generate the input data."
+        },
+        "hrn": {
+          "type": "string",
+          "example": "hrn:here:data:::my-catalog",
+          "description": "The HERE Resource Name (HRN) of the catalog that the batch commit depends on."
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "example": 23,
+          "description": "The version of the catalog metadata that the batch commit depends on."
+        }
+      },
+      "description": "Describes the properties of the version dependencies."
+    },
+    "VersionInfo": {
+      "type": "object",
+      "required": [
+        "dependencies",
+        "timestamp",
+        "version"
+      ],
+      "properties": {
+        "dependencies": {
+          "type": "array",
+          "description": "A list of the catalog dependencies.",
+          "items": {
+            "$ref": "#/definitions/VersionDependency"
+          }
+        },
+        "partitionCounts": {
+          "type": "object",
+          "description": "A map of the layers in the catalog and their partition counts. The map is expressed in key value pairs.",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "timestamp": {
+          "type": "integer",
+          "format": "int64",
+          "example": "1516397474657",
+          "description": "Timestamp that indicates when the version was created."
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1,
+          "description": "The version of the catalog metadata. It is incremented every time you change catalog metadata e.g. by publishing new partitions to durable layers."
+        }
+      },
+      "description": "Describes properties for the catalog version."
+    },
+    "VersionInfos": {
+      "type": "object",
+      "required": [
+        "versions"
+      ],
+      "properties": {
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VersionInfo"
+          }
+        }
+      },
+      "description": "Describes the list of version information for a catalog."
+    },
+    "VersionResponse": {
+      "type": "object",
+      "required": [
+        "version"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "description": "The version of the catalog metadata. It is incremented every time you change catalog metadata e.g. by publishing new partitions to durable layers."
+        }
+      },
+      "description": "The version of the catalog."
+    }
+  }
+}
