@@ -4,7 +4,7 @@
 
 import macros, strutils, json, tables, strtabs, strutils, strformat, sequtils, httpclient, uri
 import openimapi/[util, helper]
-
+include openimapi/["tmpl.nimf"]
 
 type
   RespApi*[T] = object
@@ -86,8 +86,8 @@ proc convSwagType(prop: JsonNode): (NimNode, NimNode, string) =
     else: #should be string type
       (ident swgT, newLit(""), "")
 
-proc fromDefinitions(defs: JsonNode, res: var NimNode) =
-  res.add nnkTypeSection.newTree()
+proc fromDefinitions(defs: JsonNode): NimNode =
+  result = nnkTypeSection.newTree()
   for k,v in pairs(defs.getFields):
     dbg:  echo "k:", k
     var propList = newTree(nnkRecList)
@@ -96,7 +96,7 @@ proc fromDefinitions(defs: JsonNode, res: var NimNode) =
       let tpy = (convSwagType vP)[0]
       let propTree = newTree(nnkIdentDefs, ident kP, tpy, newEmptyNode())
       propList.add propTree
-    res[0].add nnkTypeDef.newTree(
+    result.add nnkTypeDef.newTree(
                 newIdentNode(k),
                 newEmptyNode(),
                 nnkObjectTy.newTree(
@@ -105,17 +105,9 @@ proc fromDefinitions(defs: JsonNode, res: var NimNode) =
                   propList
                 )
             )
-    when false:
-      let kCls {.inject.} = newIdentNode k
-      let resProp = newStmtList()
-      resProp.add quote do:
-        type
-          `kCls` {.inject.} = object
-            xx: int
-            yy: string
 
 
-proc fromPaths(it: JsonNode, tn: string, res: var NimNode) =
+proc fromPaths(it: JsonNode, tn: string): seq[NimNode] =
   let
     host = it["host"].getStr
     basePath = it["basePath"].getStr
@@ -176,7 +168,7 @@ proc fromPaths(it: JsonNode, tn: string, res: var NimNode) =
       dbg: echo "sttmQ:", sttmQ
       let tblQPrmsSttm = genTblQPrms(prmsQs, "tblQPrms")
       let tblNonReqrPrmsSttm = genStrTblPrms(prmsNonReqs)
-      res.add nnkProcDef.newTree(
+      result.add nnkProcDef.newTree(
           prcN,
           newEmptyNode(),
           newEmptyNode(),
@@ -241,8 +233,8 @@ proc fromPaths(it: JsonNode, tn: string, res: var NimNode) =
           #)
         )
 
-proc genApiType(tn: string, res: NimNode) =
-  res.add nnkTypeSection.newTree(
+proc genApiType(tn: string): seq[NimNode] =
+  result.add nnkTypeSection.newTree(
     nnkTypeDef.newTree(
         newIdentNode(tn),
         newEmptyNode(),
@@ -260,7 +252,7 @@ proc genApiType(tn: string, res: NimNode) =
   let
     nprc = ident("new" & tn)
     retT = ident(tn)
-  res.add quote do:
+  result.add quote do:
     proc `nprc`(t: string, baseURL = ""): `retT` =
       `retT`(hClient: newHttpClient(), token: t, baseURL: baseURL)
 
@@ -268,9 +260,10 @@ proc genApiType(tn: string, res: NimNode) =
 template runSwg*(tn, fn: string): untyped =
   parseJsonCompTime(fn, it):
     var res = newStmtList()
-    fromDefinitions(it["definitions"], res)
-    genApiType(tn, res)
-    fromPaths(it, tn, res)
+    res.add fromDefinitions(it["definitions"])
+    res.add genApiType(tn)
+    res.add fromPaths(it, tn)
+    writeFile("x.java", generateJava(res))
       #dbg: echo "resadd:", resadd.treeRepr
       #[res.add quote do:
         type

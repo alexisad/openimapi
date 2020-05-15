@@ -36,13 +36,14 @@ suite "Test HERE OpenApi":
     check x.version == "chechVer"
     let lApi = newLookupAPI(token)
     let apis = lApi.resourceAPIList("hrn:here:data::olp-here:rib-2")
+    echo "apis: ", apis
     let metaDApiRsr = filter(apis, proc (x: API): bool =
                       x.api == "metadata")
     echo "metaDApiRsr:", metaDApiRsr
     let mdApi = newMetadataAPI(token, metaDApiRsr[0].baseURL)
     echo "getLayersVersion:", mdApi.getLayersVersion( mdApi.latestVersion(-1).version )
-    #echo "latestVersion:", mdApi.latestVersion(-1)
-    echo mdApi.getPartitions("administrative-place-profiles", 1015)
+    echo "latestVersion:", mdApi.latestVersion(-1)
+    #echo mdApi.getPartitions("administrative-place-profiles", mdApi.latestVersion(-1).version)
     #echo mdApi.getPartitions("state", 1015)
     #echo "minimumVersion:", mdApi.minimumVersion()
 
