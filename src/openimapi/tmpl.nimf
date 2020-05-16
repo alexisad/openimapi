@@ -1,7 +1,9 @@
 #? stdtmpl | standard
-#proc generateJava(nimObj: NimNode): string =
-#  include nimnode2java
+# import nimnode2java
+#proc generateJava(jClsObj: JavaClassObj): string =
 #  result = ""
 package hplatform.here.com
 
-public class $javaClass.name
+public class $jClsObj.name {
+    
+}

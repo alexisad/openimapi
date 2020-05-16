@@ -3,7 +3,7 @@
 # but you can remove it if you wish.
 
 import macros, strutils, json, tables, strtabs, strutils, strformat, sequtils, httpclient, uri
-import openimapi/[util, helper]
+import openimapi/[util, helper, nimnode2java]
 include openimapi/["tmpl.nimf"]
 
 type
@@ -260,10 +260,13 @@ proc genApiType(tn: string): seq[NimNode] =
 template runSwg*(tn, fn: string): untyped =
   parseJsonCompTime(fn, it):
     var res = newStmtList()
-    res.add fromDefinitions(it["definitions"])
-    res.add genApiType(tn)
-    res.add fromPaths(it, tn)
-    writeFile("x.java", generateJava(res))
+    let apiType = genApiType(tn)
+    let typeDefs = fromDefinitions(it["definitions"])
+    let apiProcs = fromPaths(it, tn)
+    res.add apiType
+    res.add typeDefs
+    res.add apiProcs
+    writeFile("xx.java", generateJava toJavaClass(apiType, typeDefs, apiProcs))
       #dbg: echo "resadd:", resadd.treeRepr
       #[res.add quote do:
         type
