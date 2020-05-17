@@ -13,15 +13,7 @@ import hereolpoauth
 
 suite "Test HERE OpenApi":
   let req = OAuthRequest()
-  let t = waitFor req.getToken(credStr =
-    """
-      here.user.id = HERE-fcd5536c-b482-4d67-8dcf-c231176ad1c5
-      here.client.id = 75M6cdORX7ccy2UBj5EJ
-      here.access.key.id = jN_xQhHl4XG8LmP_jEr7NA
-      here.access.key.secret = Uga15gWyoG1fPrjaay2SbCSLAwMGwGwqgdd-K9cKr7qq7ooYiG5trJz4DTBmya_7QOIpfj7qt-Af9G2_XVsznA
-      here.token.endpoint.url = https://account.api.here.com/oauth2/token
-    """
-  )
+  let t = waitFor req.getToken()
   let token = t["access_token"].getStr
   echo token
 

@@ -6,10 +6,7 @@ import macros, strutils, json, tables, strtabs, strutils, strformat, sequtils, h
 import openimapi/[util, helper, nimnode2java]
 include openimapi/["tmpl.nimf"]
 
-type
-  RespApi*[T] = object
-    code*: HttpCode
-    data*: T
+export json, httpclient, tables, strutils, uri
 
 macro parseJsonCompTime*(fname: string, it, body: untyped): untyped {.gensym.} =
   var
